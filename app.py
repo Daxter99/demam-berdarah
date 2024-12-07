@@ -2,10 +2,9 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import requests
+import time
 from PIL import Image
 import pickle
-from sklearn.naive_bayes import GaussianNB
-import time
 
 # Fungsi untuk mengambil data suhu dari ThingSpeak
 def get_suhu_from_thingspeak(api_url, api_key, results=2):
@@ -28,13 +27,6 @@ def get_suhu_from_thingspeak(api_url, api_key, results=2):
         st.error("Gagal mengambil data dari ThingSpeak. Status code: {}".format(response.status_code))
         return None
 
-# URL API ThingSpeak
-API_URL = "https://api.thingspeak.com/channels/2778023/fields/1.json"
-API_KEY = "GN8KSJHYFO2YJD9K"
-
-import streamlit as st
-import time
-
 # Fungsi untuk hitungan mundur
 def countdown_timer(seconds):
     countdown_placeholder = st.empty()  # Placeholder untuk memperbarui tulisan
@@ -42,11 +34,23 @@ def countdown_timer(seconds):
         countdown_placeholder.markdown(f"### Mengambil Suhu dalam **{i} detik**...")
         time.sleep(1)
     countdown_placeholder.markdown("### Menyegarkan halaman...")
-    st.experimental_rerun()  # Memuat ulang halaman
+    st.session_state.reload = True  # Menandakan bahwa halaman perlu di-refresh
+
+# URL API ThingSpeak
+API_URL = "https://api.thingspeak.com/channels/2778023/fields/1.json"
+API_KEY = "GN8KSJHYFO2YJD9K"
+
+# Memeriksa jika sudah ada state untuk penyegaran
+if "reload" not in st.session_state:
+    st.session_state.reload = False
 
 # Tombol untuk memulai hitungan mundur
 if st.button("Ambil Suhu"):
-    countdown_timer(10)  # Hitungan mundur selama ? detik
+    countdown_timer(10)  # Hitungan mundur selama 10 detik
+
+# Refresh halaman jika 'reload' bernilai True
+if st.session_state.reload:
+    st.experimental_rerun()
 
 # Tampilan utama aplikasi Streamlit
 st.write("""
@@ -112,6 +116,8 @@ else:
         return fitur
     inputan = input_user()
 
+# Load Model dan Prediksi
+load_model = pickle.load(open('model_dd4.pkl', 'rb'))
 ddPrediction_raw = pd.read_csv('dataset4.csv')
 ddPredictions = ddPrediction_raw.drop(columns=['Label'])
 df = pd.concat([inputan, ddPredictions], axis=0)
@@ -123,40 +129,20 @@ for col in encode:
     del df[col]
 df = df[:1]
 
-st.subheader('Input Parameters')
-if upload_file is not None:
-    st.write(df)
-else:
-    st.write("Menunggu file CSV atau menggunakan data input manual.")
-    st.write(df)
-
-# Load Model dan Prediksi
-load_model = pickle.load(open('model_dd4.pkl', 'rb'))
+# Prediksi dan Menampilkan Hasil
 prediksi = load_model.predict(df)
 prediksi_proba = load_model.predict_proba(df)
 
-# Mapping kategori prediksi
-kategori_prediksi = {
-    0: "Demam Dengue",
-    1: "Demam Berdarah Dengue Tingkat 1",
-    2: "Demam Berdarah Dengue Tingkat 2",
-    3: "Demam Berdarah Dengue Tingkat 3",
-    4: "Demam Berdarah Dengue Tingkat 4"
-}
-
-# Menampilkan hasil prediksi
 st.subheader('Prediction Result (Demam Berdarah Prediction)')
 prediksi_kategori = kategori_prediksi.get(prediksi[0], "Kategori Tidak Dikenal")
-st.markdown(f"<h2 style='font-size: 40px; color: #ff6347;'>Anda Terindikasi : {prediksi_kategori}</h2>", unsafe_allow_html=True)
+st.markdown(f"<h2 style='font-size: 40px; color: #ff6347;'>**Anda Terindikasi :** {prediksi_kategori}</h2>", unsafe_allow_html=True)
 
-# Menampilkan probabilitas prediksi
-#st.subheader('Dengan Probabilitas {probabilitas_tertinggi:.4f}')
+# Probabilitas Prediksi
+st.subheader('The Probability of the Predicted Outcome')
 
-# Mencari probabilitas tertinggi
 probabilitas_tertinggi = np.max(prediksi_proba)
 kategori_tertinggi = np.argmax(prediksi_proba)
 
-# Menampilkan kategori dengan probabilitas tertinggi
-# probabilitas_kategori = kategori_prediksi.get(kategori_tertinggi, "Kategori Tidak Dikenal")
-# st.write(f"**Kategori dengan Probabilitas Tertinggi:** {probabilitas_kategori}")
+probabilitas_kategori = kategori_prediksi.get(kategori_tertinggi, "Kategori Tidak Dikenal")
+st.write(f"**Kategori dengan Probabilitas Tertinggi:** {probabilitas_kategori}")
 st.write(f"**Probabilitas:** {probabilitas_tertinggi:.4f}")
