@@ -32,10 +32,6 @@ def get_suhu_from_thingspeak(api_url, api_key, results=2):
 API_URL = "https://api.thingspeak.com/channels/2778023/fields/1.json"
 API_KEY = "GN8KSJHYFO2YJD9K"
 
-# Tombol untuk refresh halaman
-if st.button("Refresh Halaman"):
-    st.experimental_rerun()
-
 # Tampilan utama aplikasi Streamlit
 st.write("""
 # Demam Berdarah Prediction.\n
