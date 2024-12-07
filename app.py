@@ -32,6 +32,19 @@ def get_suhu_from_thingspeak(api_url, api_key, results=2):
 API_URL = "https://api.thingspeak.com/channels/2778023/fields/1.json"
 API_KEY = "GN8KSJHYFO2YJD9K"
 
+# Fungsi untuk hitungan mundur
+def countdown_timer(seconds):
+    countdown_placeholder = st.empty()  # Placeholder untuk memperbarui tulisan
+    for i in range(seconds, 0, -1):
+        countdown_placeholder.markdown(f"### Mengambil Suhu dalam **{i} detik**...")
+        time.sleep(1)
+    countdown_placeholder.markdown("### Menyegarkan halaman...")
+    st.experimental_rerun()  # Memuat ulang halaman
+
+# Tombol untuk memulai hitungan mundur
+if st.button("Ambil Suhu"):
+    countdown_timer(10)  # Hitungan mundur selama ? detik
+
 # Tampilan utama aplikasi Streamlit
 st.write("""
 # Demam Berdarah Prediction.\n
