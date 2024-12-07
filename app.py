@@ -5,6 +5,7 @@ import requests
 from PIL import Image
 import pickle
 from sklearn.naive_bayes import GaussianNB
+import time
 
 # Fungsi untuk mengambil data suhu dari ThingSpeak
 def get_suhu_from_thingspeak(api_url, api_key, results=2):
